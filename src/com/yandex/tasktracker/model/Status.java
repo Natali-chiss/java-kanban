@@ -1,4 +1,4 @@
-package model;
+package com.yandex.tasktracker.model;
 
 public enum Status {
     NEW,

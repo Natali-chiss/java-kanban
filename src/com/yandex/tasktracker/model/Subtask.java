@@ -1,8 +1,8 @@
-package model;
+package com.yandex.tasktracker.model;
 
 public class Subtask extends Task {
 
-    int epicId;
+    private final int epicId;
 
     public Subtask(String name, String description, Status status, int epicId) {
         super(name, description, status);
@@ -11,9 +11,5 @@ public class Subtask extends Task {
 
     public int getEpicId() {
         return epicId;
-    }
-
-    public void setEpicId(int epicId) {
-        this.epicId = epicId;
     }
 }
