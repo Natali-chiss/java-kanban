@@ -163,6 +163,7 @@ public class TaskManager {
                 status = Status.DONE;
             } else if (numberN == epic.getSubtasksIds().size()) {
                 epic.setStatus(Status.NEW);
+                return;
             } else {
                 status = Status.IN_PROGRESS;
             }
