@@ -18,23 +18,7 @@ public class Task {
         this.id = id;
     }
 
-    public int getId() {
-        return id;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null) return false;
-        if (this.getClass() != obj.getClass()) return false;
-        Task otherTask = (Task) obj;
-        return (id == otherTask.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
+    public int getId() { return id; }
 
     public String getName() {
         return name;
@@ -58,6 +42,20 @@ public class Task {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null) return false;
+        if (this.getClass() != obj.getClass()) return false;
+        Task otherTask = (Task) obj;
+        return (id == otherTask.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 
     @Override

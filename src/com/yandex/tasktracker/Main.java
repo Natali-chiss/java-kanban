@@ -4,39 +4,52 @@ import com.yandex.tasktracker.model.Epic;
 import com.yandex.tasktracker.model.Status;
 import com.yandex.tasktracker.model.Subtask;
 import com.yandex.tasktracker.model.Task;
+import com.yandex.tasktracker.service.Managers;
 import com.yandex.tasktracker.service.TaskManager;
 
 
 public class Main {
 
     public static void main(String[] args) {
-        TaskManager tm = new TaskManager();
 
-        Task task = tm.createTask(new Task("Задача", "1", Status.NEW));
-        System.out.println("Create " + task);
-        Task task2 = tm.createTask(new Task("Задача", "2", Status.NEW));
-        System.out.println("Create " + task2);
-        Task taskFromTm = tm.getTask(task.getId());
-        System.out.println("Get " + taskFromTm);
-        taskFromTm.setName("Новое имя задачи");
-        tm.updateTask(taskFromTm);
-        System.out.println("Update " + taskFromTm);
-        tm.removeTask(taskFromTm.getId());
-        System.out.println(tm.getTasksList());
+        TaskManager manager = Managers.getDefault();
 
-        Epic epic1 = tm.createEpic(new Epic("epic", "1"));
-        Subtask subtask1 = tm.createSubtask(new Subtask("subtask", "1", Status.NEW, epic1.getId()));
-        Subtask subtask2 = tm.createSubtask(new Subtask("subtask", "2", Status.NEW, epic1.getId()));
+        Task task1 = manager.createTask(new Task("Задача", "1", Status.NEW));
+        Task task2 = manager.createTask(new Task("Задача", "2", Status.NEW));
+        Task taskFromTm = manager.getTask(task1.getId());
+        taskFromTm.setStatus(Status.DONE);
+        manager.updateTask(taskFromTm);
 
-        Epic epic2 = tm.createEpic(new Epic("epic", "2"));
-        Subtask subtask3 = tm.createSubtask(new Subtask("subtask", "3", Status.NEW, epic2.getId()));
-        System.out.println(tm.getEpicSubtasks(epic1.getId()));
-        subtask3.setStatus(Status.DONE);
-        tm.updateSubtask(subtask3);
-        System.out.println(tm.getEpicsList());
-        System.out.println(tm.getSubtasksList());
-        tm.removeSubtask(subtask3.getId());
-        System.out.println(tm.getEpicsList());
-        System.out.println(tm.getSubtasksList());
+        Epic epic1 = manager.createEpic(new Epic("epic", "1"));
+        Subtask subtask1 = manager.createSubtask(new Subtask("subtask", "1", Status.NEW, epic1.getId()));
+        Subtask subtask2 = manager.createSubtask(new Subtask("subtask", "2", Status.NEW, epic1.getId()));
+        Epic epicFromTm = manager.getEpic(epic1.getId());
+        Subtask subtaskFromTm = manager.getSubtask(subtask2.getId());
+
+        printAllTasks(manager);
+    }
+
+    private static void printAllTasks(TaskManager manager) {
+        System.out.println("Задачи:");
+        for (Task task : manager.getTasksList()) {
+            System.out.println(task);
+        }
+        System.out.println("Эпики:");
+        for (Task epic : manager.getEpicsList()) {
+            System.out.println(epic);
+
+            for (Task task : manager.getEpicSubtasks(epic.getId())) {
+                System.out.println("--> " + task);
+            }
+        }
+        System.out.println("Подзадачи:");
+        for (Task subtask : manager.getSubtasksList()) {
+            System.out.println(subtask);
+        }
+
+        System.out.println("История просмотра:");
+        for (Task task : manager.getHistory()) {
+            System.out.println(task);
+        }
     }
 }
