@@ -10,8 +10,8 @@ class EpicTest {
     @Test
     @DisplayName("равен другому эпику, если у них одинаковый id")
     void shouldAssertEqualsOfEpicsById() {
-        Epic epic1 = new Epic("epic", "1"); // id = 0
-        Epic epic2 = new Epic("эпик", "2"); // id = 0
+        Epic epic1 = new Epic("epic", "1");
+        Epic epic2 = new Epic("эпик", "2");
         assertEquals(epic1, epic2);
     }
 }

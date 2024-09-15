@@ -8,7 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class InMemoryHistoryManagerTest {
 
     private InMemoryHistoryManager historyManager;
-    private ArrayList<Task> history;
+    private List<Task> history;
     Task task1 = new Task("task", "1", Status.NEW);
     Task task2 = new Task("task", "2", Status.NEW);
     Task task3 = new Task("task", "3", Status.NEW);
@@ -40,16 +40,13 @@ class InMemoryHistoryManagerTest {
     @Test
     @DisplayName("хранит 10 последних просмотренных задач")
     void shouldRemoveFirstTaskIfAdd11Tasks() {
-        historyManager.addTaskToHistory(task1);
-        historyManager.addTaskToHistory(task2);
-        historyManager.addTaskToHistory(task3);
-        historyManager.addTaskToHistory(epic);
-        historyManager.addTaskToHistory(subtask);
-        historyManager.addTaskToHistory(task1);
-        historyManager.addTaskToHistory(task2);
-        historyManager.addTaskToHistory(task3);
-        historyManager.addTaskToHistory(epic);
-        historyManager.addTaskToHistory(subtask);
+        for (int i = 1; i <= 2; i++) {
+            historyManager.addTaskToHistory(task1);
+            historyManager.addTaskToHistory(task2);
+            historyManager.addTaskToHistory(task3);
+            historyManager.addTaskToHistory(epic);
+            historyManager.addTaskToHistory(subtask);
+        }
         assertEquals(10, history.size());
         historyManager.addTaskToHistory(task1);
         assertEquals(10, history.size());

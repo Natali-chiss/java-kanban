@@ -4,7 +4,7 @@ import com.yandex.tasktracker.model.Epic;
 import com.yandex.tasktracker.model.Subtask;
 import com.yandex.tasktracker.model.Task;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public interface TaskManager {
 
@@ -32,11 +32,11 @@ public interface TaskManager {
 
     Subtask getSubtask(int id);
 
-    ArrayList<Task> getTasksList();
+    List<Task> getTasksList();
 
-    ArrayList<Epic> getEpicsList();
+    List<Epic> getEpicsList();
 
-    ArrayList<Subtask> getSubtasksList();
+    List<Subtask> getSubtasksList();
 
     void removeTask(int id);
 
@@ -44,7 +44,7 @@ public interface TaskManager {
 
     void removeSubtask(int id);
 
-    ArrayList<Subtask> getEpicSubtasks(int id);
+    List<Subtask> getEpicSubtasks(int id);
 
-    ArrayList<Task> getHistory();
+    List<Task> getHistory();
 }

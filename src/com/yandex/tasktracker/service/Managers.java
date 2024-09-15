@@ -2,8 +2,10 @@ package com.yandex.tasktracker.service;
 
 public class Managers {
 
+    private Managers() {}
+
     public static TaskManager getDefault() {
-        return new InMemoryTaskManager(new InMemoryHistoryManager());
+        return new InMemoryTaskManager(getDefaultHistory());
     }
 
     public static HistoryManager getDefaultHistory() {

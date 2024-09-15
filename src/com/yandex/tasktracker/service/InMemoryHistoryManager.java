@@ -2,14 +2,19 @@ package com.yandex.tasktracker.service;
 
 import com.yandex.tasktracker.model.Task;
 
-import java.util.ArrayList;
+import java.util.List;
+import java.util.LinkedList;
 
 public class InMemoryHistoryManager implements HistoryManager {
-    private final ArrayList<Task> historyOfWatching = new ArrayList<>(10);
+    private final List<Task> historyOfWatching = new LinkedList<>();
+    private static final int MAX_SIZE_OF_HISTORY = 10;
 
     @Override
     public void addTaskToHistory(Task task) {
-        if (historyOfWatching.size() == 10) {
+        if (task == null) {
+            return;
+        }
+        if (historyOfWatching.size() == MAX_SIZE_OF_HISTORY) {
             historyOfWatching.removeFirst();
         }
         Task savedTask = new Task(task.getName(), task.getDescription(), task.getStatus());
@@ -18,7 +23,7 @@ public class InMemoryHistoryManager implements HistoryManager {
     }
 
     @Override
-    public ArrayList<Task> getHistory() {
+    public List<Task> getHistory() {
         return historyOfWatching;
     }
 }

@@ -25,7 +25,7 @@ public class Main {
         Subtask subtask2 = manager.createSubtask(new Subtask("subtask", "2", Status.NEW, epic1.getId()));
         Epic epicFromTm = manager.getEpic(epic1.getId());
         Subtask subtaskFromTm = manager.getSubtask(subtask2.getId());
-
+        Task ghostTask = manager.getTask(10);
         printAllTasks(manager);
     }
 

@@ -19,6 +19,22 @@ class InMemoryTaskManagerTest {
     Epic epic = new Epic("epic", "1");
 
     @Test
+    @DisplayName("проверяет логику обновления статуса эпика")
+    void shouldReturnCorrectEpicStatus() {
+        Epic epic1 = taskManager.createEpic(epic);
+        assertEquals(Status.NEW, epic1.getStatus());
+        Subtask subtask1 = taskManager.createSubtask
+                (new Subtask("subtask", "1", Status.DONE, epic1.getId()));
+        assertEquals(Status.DONE, epic1.getStatus());
+        Subtask subtask2 = taskManager.createSubtask
+                (new Subtask("subtask", "2", Status.NEW, epic1.getId()));
+        assertEquals(Status.IN_PROGRESS, epic1.getStatus());
+        taskManager.removeSubtask(subtask1.getId());
+        taskManager.removeSubtask(subtask2.getId());
+        assertEquals(Status.NEW, epic1.getStatus());
+    }
+
+    @Test
     @DisplayName("нельзя добавить эпик в самого себя в виде подзадачи")
     void shouldNotAddEpicInSubtask() {
         Epic epic1 = taskManager.createEpic(epic);
