@@ -7,9 +7,7 @@ import com.yandex.tasktracker.model.Task;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("Менеджер задач")
 class InMemoryTaskManagerTest {
@@ -17,6 +15,30 @@ class InMemoryTaskManagerTest {
     final InMemoryTaskManager taskManager = new InMemoryTaskManager(new InMemoryHistoryManager());
     Task task = new Task("task", "1", Status.DONE);
     Epic epic = new Epic("epic", "1");
+
+    @Test
+    @DisplayName("проверяет, что удаляемые подзадачи не должны хранить внутри себя старые id")
+    void shouldReturn() {
+        Epic epic1 = taskManager.createEpic(epic);
+        Subtask subtask1 = taskManager.createSubtask
+                (new Subtask("subtask", "1", Status.DONE, epic1.getId()));
+        assertTrue(subtask1.getId() != 0);
+        taskManager.removeSubtask(subtask1.getId());
+        assertEquals(0, subtask1.getId());
+    }
+
+    @Test
+    @DisplayName("проверяет, что внутри эпиков не остаётся неактуальных id подзадач")
+    void shouldReturnCorrectEpicSubtasksIds() {
+        Epic epic1 = taskManager.createEpic(epic);
+        assertEquals(0, epic1.getSubtasksIds().size());
+        Subtask subtask1 = taskManager.createSubtask
+                (new Subtask("subtask", "1", Status.DONE, epic1.getId()));
+        assertEquals(1, epic1.getSubtasksIds().size());
+        assertEquals(subtask1.getId(), epic1.getSubtasksIds().getFirst());
+        taskManager.removeSubtask(subtask1.getId());
+        assertEquals(0, epic1.getSubtasksIds().size());
+    }
 
     @Test
     @DisplayName("проверяет логику обновления статуса эпика")
