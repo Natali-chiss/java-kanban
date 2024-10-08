@@ -49,7 +49,7 @@ public class InMemoryHistoryManager implements HistoryManager {
     public List<Task> getTasks() {
         final List<Task> historyList = new LinkedList<>();
         Node current = first;
-        while(current != null) {
+        while (current != null) {
             historyList.addLast(current.task);
             current = current.next;
         }
