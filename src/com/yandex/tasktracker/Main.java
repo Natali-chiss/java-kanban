@@ -19,6 +19,8 @@ public class Main {
         Task taskFromTm = manager.getTask(task1.getId());
         taskFromTm.setStatus(Status.DONE);
         manager.updateTask(taskFromTm);
+        task1.setStatus(Status.DONE);
+        manager.updateTask(task1);
 
         Epic epic1 = manager.createEpic(new Epic("epic", "1"));
         Subtask subtask1 = manager.createSubtask(new Subtask("subtask", "1", Status.NEW, epic1.getId()));
