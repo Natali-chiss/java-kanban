@@ -86,17 +86,29 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void clearTasksList() {
+        for (Integer id : tasks.keySet()) {
+            historyManager.remove(id);
+        }
         tasks.clear();
     }
 
     @Override
     public void clearEpicsList() {
+        for (Integer id : epics.keySet()) {
+            historyManager.remove(id);
+        }
+        for (Integer id : subtasks.keySet()) {
+            historyManager.remove(id);
+        }
         epics.clear();
         subtasks.clear();
     }
 
     @Override
     public void clearSubtasksList() {
+        for (Integer id : subtasks.keySet()) {
+            historyManager.remove(id);
+        }
         subtasks.clear();
         for (Epic epic : epics.values()) {
             epic.removeAllSubtasks();
@@ -151,6 +163,7 @@ public class InMemoryTaskManager implements TaskManager {
         final Epic epic = epics.remove(id);
         for (Integer subtaskId : epic.getSubtasksIds()) {
             subtasks.remove(subtaskId);
+            historyManager.remove(subtaskId);
         }
         historyManager.remove(id);
     }
@@ -161,7 +174,6 @@ public class InMemoryTaskManager implements TaskManager {
         historyManager.remove(id);
         Epic epic = epics.get(subtask.getEpicId());
         epic.removeSubtask(id);
-        subtask.setId(0);
         calculateStatus(epic);
     }
 

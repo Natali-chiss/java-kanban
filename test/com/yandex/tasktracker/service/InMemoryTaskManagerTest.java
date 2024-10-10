@@ -7,6 +7,8 @@ import com.yandex.tasktracker.model.Task;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("Менеджер задач")
@@ -17,43 +19,42 @@ class InMemoryTaskManagerTest {
     Epic epic = new Epic("epic", "1");
 
     @Test
-    @DisplayName("проверяет, что удаляемые подзадачи не должны хранить внутри себя старые id")
-    void shouldReturn() {
-        Epic epic1 = taskManager.createEpic(epic);
-        Subtask subtask1 = taskManager.createSubtask
-                (new Subtask("subtask", "1", Status.DONE, epic1.getId()));
-        assertTrue(subtask1.getId() != 0);
-        taskManager.removeSubtask(subtask1.getId());
-        assertEquals(0, subtask1.getId());
-    }
-
-    @Test
     @DisplayName("проверяет, что внутри эпиков не остаётся неактуальных id подзадач")
     void shouldReturnCorrectEpicSubtasksIds() {
         Epic epic1 = taskManager.createEpic(epic);
         assertEquals(0, epic1.getSubtasksIds().size());
+        Epic savedEpic = taskManager.getEpic(epic1.getId());
+        assertEquals(1, taskManager.getHistory().size());
         Subtask subtask1 = taskManager.createSubtask
                 (new Subtask("subtask", "1", Status.DONE, epic1.getId()));
+        Subtask savedSubtask = taskManager.getSubtask(subtask1.getId());
+        assertEquals(2, taskManager.getHistory().size());
         assertEquals(1, epic1.getSubtasksIds().size());
         assertEquals(subtask1.getId(), epic1.getSubtasksIds().getFirst());
         taskManager.removeSubtask(subtask1.getId());
         assertEquals(0, epic1.getSubtasksIds().size());
+        assertEquals(1, taskManager.getHistory().size());
     }
 
     @Test
     @DisplayName("проверяет логику обновления статуса эпика")
     void shouldReturnCorrectEpicStatus() {
         Epic epic1 = taskManager.createEpic(epic);
+        Epic savedEpic = taskManager.getEpic(epic1.getId());
         assertEquals(Status.NEW, epic1.getStatus());
         Subtask subtask1 = taskManager.createSubtask
                 (new Subtask("subtask", "1", Status.DONE, epic1.getId()));
+        Subtask savedSubtask1 = taskManager.getSubtask(subtask1.getId());
         assertEquals(Status.DONE, epic1.getStatus());
         Subtask subtask2 = taskManager.createSubtask
                 (new Subtask("subtask", "2", Status.NEW, epic1.getId()));
+        Subtask savedSubtask2 = taskManager.getSubtask(subtask2.getId());
+        assertEquals(3, taskManager.getHistory().size());
         assertEquals(Status.IN_PROGRESS, epic1.getStatus());
         taskManager.removeSubtask(subtask1.getId());
         taskManager.removeSubtask(subtask2.getId());
         assertEquals(Status.NEW, epic1.getStatus());
+        assertEquals(1, taskManager.getHistory().size());
     }
 
     @Test
@@ -85,6 +86,8 @@ class InMemoryTaskManagerTest {
         assertNotNull(task1, "Задача не создана.");
         Task savedTask = taskManager.getTask(task1.getId());
         assertNotNull(savedTask, "Задача не найдена.");
+        List<Task> history = taskManager.getHistory();
+        assertEquals(1, history.size());
     }
 
     @Test
@@ -94,17 +97,23 @@ class InMemoryTaskManagerTest {
         assertNotNull(epic1, "Эпик не создан.");
         Epic savedEpic = taskManager.getEpic(epic1.getId());
         assertNotNull(savedEpic, "Эпик не найден.");
+        List<Task> history = taskManager.getHistory();
+        assertEquals(1, history.size());
     }
 
     @Test
     @DisplayName("создаёт подзадачи и находит их по id")
     void shouldCreateSubtaskAndGetById() {
         Epic epic1 = taskManager.createEpic(epic);
+        Epic savedEpic = taskManager.getEpic(epic1.getId());
         Subtask subtask1 = taskManager.createSubtask
                 (new Subtask("subtask", "1", Status.NEW, epic1.getId()));
         assertNotNull(subtask1, "Подзадача не создана.");
         Subtask savedSubtask = taskManager.getSubtask(subtask1.getId());
+        assertEquals(2, taskManager.getHistory().size());
         assertNotNull(savedSubtask, "Подзадача не найдена.");
+        taskManager.removeEpic(epic1.getId());
+        assertEquals(0, taskManager.getHistory().size());
     }
 
     @Test
