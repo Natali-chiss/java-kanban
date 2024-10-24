@@ -7,7 +7,6 @@ import com.yandex.tasktracker.model.Task;
 import com.yandex.tasktracker.service.Managers;
 import com.yandex.tasktracker.service.TaskManager;
 
-
 public class Main {
 
     public static void main(String[] args) {

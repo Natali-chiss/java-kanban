@@ -1,4 +1,4 @@
-package com.yandex.tasktracker.service;
+package com.yandex.tasktracker.service.history;
 
 import com.yandex.tasktracker.model.Task;
 

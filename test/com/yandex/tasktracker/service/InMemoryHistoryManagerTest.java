@@ -4,6 +4,7 @@ import com.yandex.tasktracker.model.Epic;
 import com.yandex.tasktracker.model.Status;
 import com.yandex.tasktracker.model.Subtask;
 import com.yandex.tasktracker.model.Task;
+import com.yandex.tasktracker.service.history.InMemoryHistoryManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

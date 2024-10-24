@@ -14,6 +14,10 @@ public class Task {
         this.status = status;
     }
 
+    public Type getType() {
+        return Type.TASK;
+    }
+
     public void setId(int id) {
         this.id = id;
     }
@@ -44,6 +48,10 @@ public class Task {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    public Integer getEpicId() {
+        return null;
     }
 
     @Override
