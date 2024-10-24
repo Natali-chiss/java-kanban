@@ -4,6 +4,7 @@ import com.yandex.tasktracker.model.Epic;
 import com.yandex.tasktracker.model.Status;
 import com.yandex.tasktracker.model.Subtask;
 import com.yandex.tasktracker.model.Task;
+import com.yandex.tasktracker.service.history.HistoryManager;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -12,9 +13,9 @@ import java.util.HashMap;
 
 public class InMemoryTaskManager implements TaskManager {
 
-    private final Map<Integer, Task> tasks;
-    private final Map<Integer, Epic> epics;
-    private final Map<Integer, Subtask> subtasks;
+    protected final Map<Integer, Task> tasks;
+    protected final Map<Integer, Epic> epics;
+    protected final Map<Integer, Subtask> subtasks;
     private final HistoryManager historyManager;
 
     private int newId = 0;

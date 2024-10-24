@@ -1,4 +1,4 @@
-package com.yandex.tasktracker.service;
+package com.yandex.tasktracker.service.history;
 
 import com.yandex.tasktracker.model.Task;
 
@@ -8,6 +8,10 @@ import java.util.List;
 import java.util.Map;
 
 public class InMemoryHistoryManager implements HistoryManager {
+
+    private final Map<Integer, Node> historyMap = new HashMap<>();
+    private Node first;
+    private Node last;
 
     private static class Node {
         Node prev;
@@ -20,10 +24,6 @@ public class InMemoryHistoryManager implements HistoryManager {
             this.next = next;
         }
     }
-
-    private final Map<Integer, Node> historyMap = new HashMap<>();
-    private Node first;
-    private Node last;
 
     @Override
     public void addTaskToHistory(Task task) {
