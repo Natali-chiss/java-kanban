@@ -14,6 +14,8 @@ import java.nio.file.Files;
 public class FileBackedTaskManager extends InMemoryTaskManager implements TaskManager {
 
     private final Path path;
+    private static final String HEAD = "id,type,name,status,description,epic";
+
 
     public FileBackedTaskManager(Path path) {
         super(Managers.getDefaultHistory());
@@ -37,7 +39,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager implements TaskMa
     private void save() {
         try (final BufferedWriter writer = new BufferedWriter(new FileWriter(path.toFile(),
                 StandardCharsets.UTF_8))) {
-            writer.write("id,type,name,status,description,epic\n");
+            writer.write(HEAD + "\n");
             for (Task task : tasks.values()) {
                 writer.write(toString(task) + "\n");
             }
@@ -52,30 +54,40 @@ public class FileBackedTaskManager extends InMemoryTaskManager implements TaskMa
         }
     }
 
-    public void init() {
-        loadFromFile(path);
+    public static FileBackedTaskManager loadFromFile(Path file) {
+        final FileBackedTaskManager manager = new FileBackedTaskManager(file);
+        manager.readFromFile();
+        return manager;
     }
 
-    private FileBackedTaskManager loadFromFile(Path file) {
-        final FileBackedTaskManager fileManager = new FileBackedTaskManager(file);
-        try (BufferedReader reader = new BufferedReader(new FileReader(file.toFile(), StandardCharsets.UTF_8))) {
+    private void readFromFile() {
+        int maxId = 0;
+        try (BufferedReader reader = new BufferedReader(new FileReader(path.toFile(), StandardCharsets.UTF_8))) {
+            if (reader.ready()) {
+                String head = reader.readLine();
+            }
             while (reader.ready()) {
                 String line = reader.readLine();
-                if (!line.equals("id,type,name,status,description,epic")) {
-                    Task task = fromString(line);
-                    if (task != null) {
-                        switch (task.getType()) {
-                            case TASK -> tasks.put(task.getId(), task);
-                            case EPIC -> epics.put(task.getId(), (Epic) task);
-                            case SUBTASK -> subtasks.put(task.getId(), (Subtask) task);
+                final Task task = fromString(line);
+                if (task != null) {
+                    final int id = task.getId();
+                    switch (task.getType()) {
+                        case TASK -> tasks.put(task.getId(), task);
+                        case EPIC -> epics.put(task.getId(), (Epic) task);
+                        case SUBTASK -> {
+                            subtasks.put(task.getId(), (Subtask) task);
+                            epics.get(task.getEpicId()).addSubtask(task.getId());
                         }
+                    }
+                    if (maxId < id) {
+                        maxId = id;
                     }
                 }
             }
         } catch (IOException e) {
-            throw new ManagerSaveException("Ошибка в файле " + file, e);
+            throw new ManagerSaveException("Ошибка в файле " + path, e);
         }
-        return fileManager;
+        newId = maxId;
     }
 
     private Task fromString(String value) {

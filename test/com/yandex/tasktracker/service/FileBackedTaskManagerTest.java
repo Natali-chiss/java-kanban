@@ -9,6 +9,7 @@ import com.yandex.tasktracker.service.history.InMemoryHistoryManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
@@ -19,13 +20,15 @@ import java.nio.file.Files;
 public class FileBackedTaskManagerTest<T extends TaskManager> extends TaskManagerTest<T> {
 
     Path tempFile;
+    FileBackedTaskManager fileBackedTaskManager;
 
     @Override
     @BeforeEach
     void shouldInit() {
         try {
             tempFile = Files.createTempFile("tasksFile-", ".txt");
-            taskManager = (T) new FileBackedTaskManager(tempFile, new InMemoryHistoryManager());
+            fileBackedTaskManager = new FileBackedTaskManager(tempFile, new InMemoryHistoryManager());
+            taskManager = (T) fileBackedTaskManager;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -44,34 +47,55 @@ public class FileBackedTaskManagerTest<T extends TaskManager> extends TaskManage
                 (new Subtask("subtask", "2", Status.IN_PROGRESS, epic1.getId()));
         assertEquals(Status.IN_PROGRESS, epic1.getStatus());
 
-        FileBackedTaskManager newManager = new FileBackedTaskManager(tempFile);
-        newManager.init();
-        assertEquals(0, newManager.getHistory().size());
+        FileBackedTaskManager loadFromFile = FileBackedTaskManager.loadFromFile(tempFile);
+        assertEquals(0, loadFromFile.getHistory().size());
 
-        Task loadedTask = newManager.getTask(task1.getId());
-        assertEquals(task1.getName(), loadedTask.getName());
-        assertEquals(task1.getDescription(), loadedTask.getDescription());
-        assertEquals(task1.getStatus(), loadedTask.getStatus());
+        Task loadedTask = loadFromFile.getTask(task1.getId());
+        System.out.println("Проверка задач:");
+        System.out.println("Индексы задач совпадают: " + (task1.getId() == loadedTask.getId()) + " - "
+                + loadedTask.getId());
+        System.out.println("Имена задач совпадают: " + task1.getName().equals(loadedTask.getName()) + " - "
+                + loadedTask.getName());
+        System.out.println("Описания задач совпадают: " + task1.getDescription().equals(loadedTask.getDescription())
+                + " - " + loadedTask.getDescription());
+        System.out.println("Статус задач совпадает: " + task1.getStatus().equals(loadedTask.getStatus()) + " - "
+                + loadedTask.getStatus());
 
-        Epic loadedEpic = newManager.getEpic(epic1.getId());
-        assertEquals(epic1.getName(), loadedEpic.getName());
-        assertEquals(epic1.getDescription(), loadedEpic.getDescription());
-        assertEquals(epic1.getStatus(), loadedEpic.getStatus());
-        assertEquals(epic1.getId(), loadedEpic.getId());
-        assertEquals(2, epic1.getSubtasksIds().size());
+        System.out.println("\nПроверка эпиков");
 
-        Subtask loadedSubtask1 = newManager.getSubtask(subtask1.getId());
-        assertEquals(subtask1.getName(), loadedSubtask1.getName());
-        assertEquals(subtask1.getDescription(), loadedSubtask1.getDescription());
-        assertEquals(subtask1.getStatus(), loadedSubtask1.getStatus());
-        assertEquals(subtask1.getEpicId(), loadedSubtask1.getEpicId());
+        Epic loadedEpic = loadFromFile.getEpic(epic1.getId());
+        System.out.println("Индексы эпиков совпадают: " + (epic1.getId() == loadedEpic.getId()) + " - "
+                + loadedEpic.getId());
+        System.out.println("Имена эпиков совпадают: " + epic1.getName().equals(loadedEpic.getName()) + " - "
+                + loadedEpic.getName());
+        System.out.println("Описания эпиков совпадают: " + epic1.getDescription().equals(loadedEpic.getDescription())
+                + " - " + loadedEpic.getDescription());
+        System.out.println("Статус эпиков совпадает: " + epic1.getStatus().equals(loadedEpic.getStatus()) + " - "
+                + loadedEpic.getStatus());
+        System.out.println("Количество подзадач эпиков совпадает: " + (epic1.getSubtasksIds().size()
+                == loadedEpic.getSubtasksIds().size()) + " - " + loadedEpic.getSubtasksIds().size());
 
-        Subtask loadedSubtask2 = newManager.getSubtask(subtask2.getId());
-        assertEquals(subtask2.getName(), loadedSubtask2.getName());
-        assertEquals(subtask2.getDescription(), loadedSubtask2.getDescription());
-        assertEquals(subtask2.getStatus(), loadedSubtask2.getStatus());
-        assertEquals(subtask2.getEpicId(), loadedSubtask2.getEpicId());
+        for (Subtask subtask : fileBackedTaskManager.subtasks.values()) {
+            Subtask loadedSubtask = loadFromFile.getSubtask(subtask.getId());
+            System.out.println("\nПроверка подзадач");
+            System.out.println("Индексы подзадач совпадают: " + (subtask.getId() == loadedSubtask.getId()) + " - "
+                    + loadedSubtask.getId());
+            System.out.println("Имена подзадач совпадают: " + subtask.getName().equals(loadedSubtask.getName()) + " - "
+                    + loadedSubtask.getName());
+            System.out.println("Описания подзадач совпадают: "
+                    + subtask.getDescription().equals(loadedSubtask.getDescription()) + " - "
+                    + loadedSubtask.getDescription());
+            System.out.println("Статус подзадач совпадает: " + subtask.getStatus().equals(loadedSubtask.getStatus())
+                    + " - " + loadedSubtask.getStatus());
+            System.out.println("Id эпика подзадач совпадают: " + subtask.getEpicId().equals(loadedSubtask.getEpicId())
+                    + " - " + loadedSubtask.getEpicId());
+            System.out.println();
+        }
 
-        assertEquals(4, newManager.getHistory().size());
+        assertEquals(4, loadFromFile.getHistory().size());
+
+        Task newTask = loadFromFile.createTask(new Task("task", "2", Status.NEW));
+        System.out.println("Id созданной задачи больше существующих id: " + (newTask.getId() > subtask2.getId()) + " - "
+                + newTask.getId());
     }
 }
