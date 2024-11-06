@@ -27,7 +27,7 @@ public class Main {
 
         Epic epic1 = manager.createEpic(new Epic("epic", "1"));
         Subtask subtask1 = manager.createSubtask(new Subtask("subtask", "1", Status.NEW, epic1.getId(),
-                Duration.ofHours(2), LocalDateTime.of(2024, 12, 15, 18,0)));
+                Duration.ofHours(2), LocalDateTime.of(2024, 12, 15, 18, 0)));
         Subtask subtask2 = manager.createSubtask(new Subtask("subtask", "2", Status.NEW, epic1.getId()));
         Epic epicFromTm = manager.getEpic(epic1.getId());
         Subtask subtaskFromTm = manager.getSubtask(subtask1.getId());

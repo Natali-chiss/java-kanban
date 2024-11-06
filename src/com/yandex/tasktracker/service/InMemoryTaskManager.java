@@ -224,7 +224,7 @@ public class InMemoryTaskManager implements TaskManager {
                 .map(subtasks::get)
                 .filter(Objects::nonNull)
                 .toList();
-   }
+    }
 
     @Override
     public List<Task> getHistory() {
@@ -232,8 +232,8 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     protected void calculateEpic(Epic epic) {
-     calculateStatus(epic);
-     calculateEpicTime(epic);
+        calculateStatus(epic);
+        calculateEpicTime(epic);
     }
 
     private void calculateEpicTime(Epic epic) {

@@ -113,7 +113,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager implements TaskMa
         String dateTimeString = traits[7];
         if (!dateTimeString.equals("null")) {
             startTime = LocalDateTime.parse(dateTimeString);
-        } 
+        }
 
         switch (type) {
             case TASK:
