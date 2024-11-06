@@ -27,11 +27,8 @@ public class InMemoryHistoryManager implements HistoryManager {
 
     @Override
     public void addTaskToHistory(Task task) {
-        if (task == null) {
-            return;
-        }
         removeNode(historyMap.get(task.getId()));
-        Task savedTask = new Task(task.getName(), task.getDescription(), task.getStatus());
+        Task savedTask = new Task(task.getName(), task.getDescription(), task.getStatus(), task.getDuration(), task.getStartTime());
         savedTask.setId(task.getId());
         linkLast(savedTask);
         historyMap.put(savedTask.getId(), last);
