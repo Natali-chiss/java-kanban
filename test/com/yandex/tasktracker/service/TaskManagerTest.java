@@ -8,6 +8,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -21,6 +23,17 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     @BeforeEach
     abstract void shouldInit();
 
+    @Test
+    @DisplayName("проверяет, что задачи не пересекаются по времени")
+    void shouldThrowsValidationException() {
+        assertThrows(ValidationException.class, () -> {
+            Epic epic1 = taskManager.createEpic(epic);
+            Subtask subtask1 = taskManager.createSubtask
+                    (new Subtask("subtask", "1", Status.DONE, epic1.getId(), Duration.ofMinutes(60),
+                            LocalDateTime.now()));
+            Task crossedTask = taskManager.createTask(task);
+        }, "Пересечение задач по времени должно приводить к исключению");
+    }
 
     @Test
     @DisplayName("проверяет, что внутри эпиков не остаётся неактуальных id подзадач")
@@ -41,24 +54,47 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     @Test
-    @DisplayName("проверяет логику обновления статуса эпика")
+    @DisplayName("проверяет логику обновления эпика")
     void shouldReturnCorrectEpicStatus() {
         Epic epic1 = taskManager.createEpic(epic);
         Epic savedEpic = taskManager.getEpic(epic1.getId());
         assertEquals(Status.NEW, epic1.getStatus());
+
         Subtask subtask1 = taskManager.createSubtask
-                (new Subtask("subtask", "1", Status.DONE, epic1.getId()));
+                (new Subtask("subtask", "1", Status.DONE, epic1.getId(), Duration.ofMinutes(60),
+                        LocalDateTime.now()));
         Subtask savedSubtask1 = taskManager.getSubtask(subtask1.getId());
         assertEquals(Status.DONE, epic1.getStatus());
+        assertEquals(subtask1.getStartTime(), epic1.getStartTime());
+        assertEquals(subtask1.getDuration(), epic1.getDuration());
+        assertEquals(subtask1.getEndTime(), epic1.getEndTime());
+
         Subtask subtask2 = taskManager.createSubtask
-                (new Subtask("subtask", "2", Status.NEW, epic1.getId()));
+                (new Subtask("subtask", "2", Status.NEW, epic1.getId(), Duration.ofHours(24),
+                        LocalDateTime.of(2024, 3, 11, 0, 0)));
         Subtask savedSubtask2 = taskManager.getSubtask(subtask2.getId());
         assertEquals(3, taskManager.getHistory().size());
         assertEquals(Status.IN_PROGRESS, epic1.getStatus());
+        assertEquals(subtask2.getStartTime(), epic1.getStartTime());
+        assertEquals(subtask1.getDuration().plus(subtask2.getDuration()), epic1.getDuration());
+        assertEquals(subtask1.getEndTime(), epic1.getEndTime());
+
         taskManager.removeSubtask(subtask1.getId());
+        assertEquals(Status.NEW, epic1.getStatus());
+        assertEquals(subtask2.getStartTime(), epic1.getStartTime());
+        assertEquals(subtask2.getDuration(), epic1.getDuration());
+        assertEquals(subtask2.getEndTime(), epic1.getEndTime());
+
+        subtask2.setStatus(Status.IN_PROGRESS);
+        taskManager.updateSubtask(subtask2);
+        assertEquals(Status.IN_PROGRESS, epic1.getStatus());
+
         taskManager.removeSubtask(subtask2.getId());
         assertEquals(Status.NEW, epic1.getStatus());
         assertEquals(1, taskManager.getHistory().size());
+        assertNull(epic1.getStartTime());
+        assertEquals(Duration.ofMinutes(0), epic1.getDuration());
+        assertNull(epic1.getEndTime());
     }
 
     @Test
@@ -76,12 +112,12 @@ public abstract class TaskManagerTest<T extends TaskManager> {
         Epic epic1 = taskManager.createEpic(epic);
         Subtask subtask1 = taskManager.createSubtask
                 (new Subtask("subtask", "1", Status.NEW, epic1.getId()));
-        Subtask subtask2 = new Subtask
-                (subtask1.getName(), subtask1.getDescription(), subtask1.getStatus(), subtask1.getId());
-        subtask1.setId(subtask2.getId());
-        taskManager.updateSubtask(subtask1);
-        assertEquals(subtask1.getEpicId(), epic1.getId());
+        assertThrows(NullPointerException.class, () -> {
+            Subtask subtask2 = taskManager.createSubtask(new Subtask
+                    (subtask1.getName(), subtask1.getDescription(), subtask1.getStatus(), subtask1.getId()));
+        }, "Создание подзадачи с эпиком, который не эпик, должно приводить к исключению");
     }
+
 
     @Test
     @DisplayName("создаёт задачи и находит их по id")
@@ -128,5 +164,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
         assertEquals(task.getDescription(), task1.getDescription());
         assertEquals(task.getStatus(), task1.getStatus());
         assertEquals(task.getId(), task1.getId());
+        assertEquals(task.getStartTime(), task1.getStartTime());
+        assertEquals(task.getDuration(), task1.getDuration());
     }
 }
