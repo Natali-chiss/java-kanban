@@ -11,10 +11,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Files;
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 @DisplayName("Файловый менеджер")
 public class FileBackedTaskManagerTest<T extends TaskManager> extends TaskManagerTest<T> {
@@ -32,7 +35,7 @@ public class FileBackedTaskManagerTest<T extends TaskManager> extends TaskManage
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        task = new Task("task", "1", Status.DONE);
+        task = new Task("task", "1", Status.DONE, Duration.ofMinutes(15), LocalDateTime.now());
         epic = new Epic("epic", "1");
     }
 
@@ -44,58 +47,27 @@ public class FileBackedTaskManagerTest<T extends TaskManager> extends TaskManage
         Subtask subtask1 = taskManager.createSubtask
                 (new Subtask("subtask", "1", Status.NEW, epic1.getId()));
         Subtask subtask2 = taskManager.createSubtask
-                (new Subtask("subtask", "2", Status.IN_PROGRESS, epic1.getId()));
+                (new Subtask("subtask", "2", Status.IN_PROGRESS, epic1.getId(), Duration.ofMinutes(10),
+                        LocalDateTime.of(2024, 10, 1, 9, 0)));
         assertEquals(Status.IN_PROGRESS, epic1.getStatus());
 
         FileBackedTaskManager loadFromFile = FileBackedTaskManager.loadFromFile(tempFile);
         assertEquals(0, loadFromFile.getHistory().size());
 
         Task loadedTask = loadFromFile.getTask(task1.getId());
-        System.out.println("Проверка задач:");
-        System.out.println("Индексы задач совпадают: " + (task1.getId() == loadedTask.getId()) + " - "
-                + loadedTask.getId());
-        System.out.println("Имена задач совпадают: " + task1.getName().equals(loadedTask.getName()) + " - "
-                + loadedTask.getName());
-        System.out.println("Описания задач совпадают: " + task1.getDescription().equals(loadedTask.getDescription())
-                + " - " + loadedTask.getDescription());
-        System.out.println("Статус задач совпадает: " + task1.getStatus().equals(loadedTask.getStatus()) + " - "
-                + loadedTask.getStatus());
-
-        System.out.println("\nПроверка эпиков");
+        assertThat(loadedTask).usingRecursiveComparison().isEqualTo(task1);
 
         Epic loadedEpic = loadFromFile.getEpic(epic1.getId());
-        System.out.println("Индексы эпиков совпадают: " + (epic1.getId() == loadedEpic.getId()) + " - "
-                + loadedEpic.getId());
-        System.out.println("Имена эпиков совпадают: " + epic1.getName().equals(loadedEpic.getName()) + " - "
-                + loadedEpic.getName());
-        System.out.println("Описания эпиков совпадают: " + epic1.getDescription().equals(loadedEpic.getDescription())
-                + " - " + loadedEpic.getDescription());
-        System.out.println("Статус эпиков совпадает: " + epic1.getStatus().equals(loadedEpic.getStatus()) + " - "
-                + loadedEpic.getStatus());
-        System.out.println("Количество подзадач эпиков совпадает: " + (epic1.getSubtasksIds().size()
-                == loadedEpic.getSubtasksIds().size()) + " - " + loadedEpic.getSubtasksIds().size());
+        assertThat(loadedEpic).usingRecursiveComparison().isEqualTo(epic1);
 
         for (Subtask subtask : fileBackedTaskManager.subtasks.values()) {
             Subtask loadedSubtask = loadFromFile.getSubtask(subtask.getId());
-            System.out.println("\nПроверка подзадач");
-            System.out.println("Индексы подзадач совпадают: " + (subtask.getId() == loadedSubtask.getId()) + " - "
-                    + loadedSubtask.getId());
-            System.out.println("Имена подзадач совпадают: " + subtask.getName().equals(loadedSubtask.getName()) + " - "
-                    + loadedSubtask.getName());
-            System.out.println("Описания подзадач совпадают: "
-                    + subtask.getDescription().equals(loadedSubtask.getDescription()) + " - "
-                    + loadedSubtask.getDescription());
-            System.out.println("Статус подзадач совпадает: " + subtask.getStatus().equals(loadedSubtask.getStatus())
-                    + " - " + loadedSubtask.getStatus());
-            System.out.println("Id эпика подзадач совпадают: " + subtask.getEpicId().equals(loadedSubtask.getEpicId())
-                    + " - " + loadedSubtask.getEpicId());
-            System.out.println();
+            assertThat(loadedSubtask).usingRecursiveComparison().isEqualTo(subtask);
         }
 
         assertEquals(4, loadFromFile.getHistory().size());
 
         Task newTask = loadFromFile.createTask(new Task("task", "2", Status.NEW));
-        System.out.println("Id созданной задачи больше существующих id: " + (newTask.getId() > subtask2.getId()) + " - "
-                + newTask.getId());
+        assertThat(newTask.getId()).isGreaterThan(subtask2.getId());
     }
 }
