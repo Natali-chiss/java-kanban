@@ -24,7 +24,6 @@ public class Task {
         this.name = name;
         this.description = description;
         this.status = status;
-        this.duration = Duration.ofMinutes(0);
     }
 
 
@@ -87,7 +86,7 @@ public class Task {
     }
 
     public LocalDateTime getEndTime() {
-        if (startTime != null) {
+        if (startTime != null && duration != null) {
             return startTime.plus(duration);
         } else {
             return null;

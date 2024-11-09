@@ -4,6 +4,8 @@ import com.yandex.tasktracker.model.Epic;
 import com.yandex.tasktracker.model.Status;
 import com.yandex.tasktracker.model.Subtask;
 import com.yandex.tasktracker.model.Task;
+import com.yandex.tasktracker.service.exceptions.NotFoundException;
+import com.yandex.tasktracker.service.exceptions.ValidationException;
 import com.yandex.tasktracker.service.history.HistoryManager;
 
 import java.time.Duration;
@@ -62,7 +64,7 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public void updateTask(Task task) throws NotFoundException {
+    public void updateTask(Task task) {
         Task saved = tasks.get(task.getId());
         if (saved == null) {
             throw new NotFoundException("Task id=" + task.getId());
@@ -86,7 +88,7 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public void updateSubtask(Subtask subtask) throws NotFoundException {
+    public void updateSubtask(Subtask subtask) {
         Subtask saved = subtasks.get(subtask.getId());
         if (saved == null) {
             throw new NotFoundException("Subtask id=" + subtask.getId());
@@ -102,9 +104,9 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void clearTasksList() {
-        for (Integer id : tasks.keySet()) {
-            historyManager.remove(id);
-            prioritizedTasks.remove(tasks.get(id));
+        for (Task task : tasks.values()) {
+            historyManager.remove(task.getId());
+            prioritizedTasks.remove(task);
         }
         tasks.clear();
     }
@@ -114,9 +116,9 @@ public class InMemoryTaskManager implements TaskManager {
         for (Integer id : epics.keySet()) {
             historyManager.remove(id);
         }
-        for (Integer id : subtasks.keySet()) {
-            historyManager.remove(id);
-            prioritizedTasks.remove(subtasks.get(id));
+        for (Subtask subtask : subtasks.values()) {
+            historyManager.remove(subtask.getId());
+            prioritizedTasks.remove(subtask);
         }
         epics.clear();
         subtasks.clear();
@@ -124,9 +126,9 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void clearSubtasksList() {
-        for (Integer id : subtasks.keySet()) {
-            historyManager.remove(id);
-            prioritizedTasks.remove(subtasks.get(id));
+        for (Subtask subtask : subtasks.values()) {
+            historyManager.remove(subtask.getId());
+            prioritizedTasks.remove(subtask);
         }
         subtasks.clear();
         for (Epic epic : epics.values()) {
@@ -188,7 +190,7 @@ public class InMemoryTaskManager implements TaskManager {
     public void removeTask(int id) {
         final Task task = tasks.remove(id);
         if (task.getStartTime() != null) {
-            prioritizedTasks.remove(tasks.get(id));
+            prioritizedTasks.remove(task);
         }
         historyManager.remove(id);
     }
@@ -197,10 +199,10 @@ public class InMemoryTaskManager implements TaskManager {
     public void removeEpic(int id) {
         final Epic epic = epics.remove(id);
         for (Integer subtaskId : epic.getSubtasksIds()) {
-            if (subtasks.get(subtaskId).getStartTime() != null) {
-                prioritizedTasks.remove(subtasks.get(subtaskId));
+            Subtask subtask = subtasks.remove(subtaskId);
+            if (subtask.getStartTime() != null) {
+                prioritizedTasks.remove(subtask);
             }
-            subtasks.remove(subtaskId);
             historyManager.remove(subtaskId);
         }
         historyManager.remove(id);
@@ -241,14 +243,18 @@ public class InMemoryTaskManager implements TaskManager {
         LocalDateTime currentStartTime;
         LocalDateTime latest = null;
         LocalDateTime currentEndTime;
-        Duration duration = Duration.ofMinutes(0);
+        Duration duration = null;
 
         if (!epic.getSubtasksIds().isEmpty()) {
             for (Integer subtaskId : epic.getSubtasksIds()) {
                 Subtask subtask = subtasks.get(subtaskId);
 
                 if (subtask.getDuration() != null) {
-                    duration = duration.plus(subtask.getDuration());
+                    if (duration == null) {
+                        duration = subtask.getDuration();
+                    } else {
+                        duration = duration.plus(subtask.getDuration());
+                    }
                 }
 
                 currentStartTime = subtask.getStartTime();
@@ -296,16 +302,15 @@ public class InMemoryTaskManager implements TaskManager {
         }
     }
 
-    private void checkNoTimeConflict(Task task) throws ValidationException {
+    private void checkNoTimeConflict(Task task) {
         for (Task t : getPrioritizedTasks()) {
             if (t.getId() == task.getId()) {
                 continue;
             }
-            if (t.getStartTime().isBefore(task.getStartTime()) && t.getEndTime().isAfter(task.getStartTime())) {
-                throw new ValidationException("Пересечение задач с id=" + task.getId() + " и id=" + t.getId());
-            } else if (task.getStartTime().isBefore(t.getEndTime()) && task.getEndTime().isAfter(t.getStartTime())) {
-                throw new ValidationException("Пересечение задач с id=" + task.getId() + " и id=" + t.getId());
+            if (!t.getEndTime().isAfter(task.getStartTime()) || !task.getEndTime().isAfter(t.getStartTime())) {
+                continue;
             }
+            throw new ValidationException("Пересечение задач с id=" + task.getId() + " и id=" + t.getId());
         }
     }
 }

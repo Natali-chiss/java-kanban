@@ -4,6 +4,7 @@ import com.yandex.tasktracker.model.Epic;
 import com.yandex.tasktracker.model.Status;
 import com.yandex.tasktracker.model.Subtask;
 import com.yandex.tasktracker.model.Task;
+import com.yandex.tasktracker.service.exceptions.ValidationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,12 +27,25 @@ public abstract class TaskManagerTest<T extends TaskManager> {
     @Test
     @DisplayName("проверяет, что задачи не пересекаются по времени")
     void shouldThrowsValidationException() {
+        Epic epic1 = taskManager.createEpic(epic);
+        Subtask subtask1 = taskManager.createSubtask
+                (new Subtask("subtask", "1", Status.DONE, epic1.getId(), Duration.ofMinutes(60),
+                        LocalDateTime.now()));
         assertThrows(ValidationException.class, () -> {
-            Epic epic1 = taskManager.createEpic(epic);
-            Subtask subtask1 = taskManager.createSubtask
-                    (new Subtask("subtask", "1", Status.DONE, epic1.getId(), Duration.ofMinutes(60),
-                            LocalDateTime.now()));
-            Task crossedTask = taskManager.createTask(task);
+            Task crossedTask = taskManager.createTask(new Task("task", "1", Status.NEW,
+                    subtask1.getDuration(), subtask1.getStartTime()));
+        }, "Полное пересечение задач по времени должно приводить к исключению");
+        assertThrows(ValidationException.class, () -> {
+            Task crossedTask = taskManager.createTask(new Task("task", "1", Status.NEW,
+                    Duration.ofMinutes(15), subtask1.getStartTime()));
+        }, "Пересечение задач по времени должно приводить к исключению");
+        assertThrows(ValidationException.class, () -> {
+            Task crossedTask = taskManager.createTask(new Task("task", "1", Status.NEW,
+                    Duration.ofMinutes(15), subtask1.getStartTime().plusMinutes(5)));
+        }, "Пересечение задач по времени должно приводить к исключению");
+        assertThrows(ValidationException.class, () -> {
+            Task crossedTask = taskManager.createTask(new Task("task", "1", Status.NEW,
+                    Duration.ofMinutes(80), subtask1.getStartTime()));
         }, "Пересечение задач по времени должно приводить к исключению");
     }
 
@@ -68,6 +82,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
         assertEquals(subtask1.getStartTime(), epic1.getStartTime());
         assertEquals(subtask1.getDuration(), epic1.getDuration());
         assertEquals(subtask1.getEndTime(), epic1.getEndTime());
+        assertEquals(1, taskManager.getPrioritizedTasks().size());
 
         Subtask subtask2 = taskManager.createSubtask
                 (new Subtask("subtask", "2", Status.NEW, epic1.getId(), Duration.ofHours(24),
@@ -78,12 +93,14 @@ public abstract class TaskManagerTest<T extends TaskManager> {
         assertEquals(subtask2.getStartTime(), epic1.getStartTime());
         assertEquals(subtask1.getDuration().plus(subtask2.getDuration()), epic1.getDuration());
         assertEquals(subtask1.getEndTime(), epic1.getEndTime());
+        assertEquals(2, taskManager.getPrioritizedTasks().size());
 
         taskManager.removeSubtask(subtask1.getId());
         assertEquals(Status.NEW, epic1.getStatus());
         assertEquals(subtask2.getStartTime(), epic1.getStartTime());
         assertEquals(subtask2.getDuration(), epic1.getDuration());
         assertEquals(subtask2.getEndTime(), epic1.getEndTime());
+        assertEquals(1, taskManager.getPrioritizedTasks().size());
 
         subtask2.setStatus(Status.IN_PROGRESS);
         taskManager.updateSubtask(subtask2);
@@ -93,8 +110,9 @@ public abstract class TaskManagerTest<T extends TaskManager> {
         assertEquals(Status.NEW, epic1.getStatus());
         assertEquals(1, taskManager.getHistory().size());
         assertNull(epic1.getStartTime());
-        assertEquals(Duration.ofMinutes(0), epic1.getDuration());
+        assertNull(epic1.getDuration());
         assertNull(epic1.getEndTime());
+        assertEquals(0, taskManager.getPrioritizedTasks().size());
     }
 
     @Test

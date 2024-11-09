@@ -1,4 +1,4 @@
-package com.yandex.tasktracker.service;
+package com.yandex.tasktracker.service.exceptions;
 
 public class NotFoundException extends RuntimeException {
 

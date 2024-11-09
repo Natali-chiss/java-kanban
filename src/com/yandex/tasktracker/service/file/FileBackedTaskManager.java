@@ -108,7 +108,11 @@ public class FileBackedTaskManager extends InMemoryTaskManager implements TaskMa
         String name = traits[2];
         String description = traits[4];
         Status status = Status.valueOf(traits[3]);
-        Duration duration = Duration.parse(traits[6]);
+        Duration duration = null;
+        String durationString = traits[6];
+        if (!durationString.equals("null")) {
+            duration = Duration.parse(durationString);
+        }
         LocalDateTime startTime = null;
         String dateTimeString = traits[7];
         if (!dateTimeString.equals("null")) {

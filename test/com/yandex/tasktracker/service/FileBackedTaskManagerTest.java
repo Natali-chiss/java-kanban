@@ -110,8 +110,17 @@ public class FileBackedTaskManagerTest<T extends TaskManager> extends TaskManage
                     System.out.println("Время начала подзадач не совпадает: " + loadedSubtask.getStartTime());
                 }
             }
-            System.out.println("Длительность подзадач совпадает: "
-                    + subtask.getDuration().equals(loadedSubtask.getDuration()) + " - " + loadedSubtask.getDuration());
+            if (subtask.getDuration() != null) {
+                System.out.println("Длительность подзадач совпадает: "
+                        + subtask.getDuration().equals(loadedSubtask.getDuration()) + " - "
+                        + loadedSubtask.getDuration());
+            } else {
+                if (loadedSubtask.getDuration() == null) {
+                    System.out.println("Длительность подзадач совпадает: true - null");
+                } else {
+                    System.out.println("Длительность подзадач не совпадает: " + loadedSubtask.getDuration());
+                }
+            }
         }
 
         assertEquals(4, loadFromFile.getHistory().size());
