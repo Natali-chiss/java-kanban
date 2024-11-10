@@ -291,26 +291,25 @@ public class InMemoryTaskManager implements TaskManager {
                 .filter(subtask -> subtask.getStatus() == Status.NEW)
                 .count();
 
-        if (subtasksList.isEmpty()) {
+        if (numberN == subtasksList.size()) {
             epic.setStatus(Status.NEW);
         } else if (numberD == subtasksList.size()) {
             epic.setStatus(Status.DONE);
-        } else if (numberN == subtasksList.size()) {
-            epic.setStatus(Status.NEW);
         } else {
             epic.setStatus(Status.IN_PROGRESS);
         }
     }
 
     private void checkNoTimeConflict(Task task) {
-        for (Task t : getPrioritizedTasks()) {
-            if (t.getId() == task.getId()) {
+        for (Task prioritizedTask : getPrioritizedTasks()) {
+            if (prioritizedTask.getId() == task.getId()) {
                 continue;
             }
-            if (!t.getEndTime().isAfter(task.getStartTime()) || !task.getEndTime().isAfter(t.getStartTime())) {
+            if (!prioritizedTask.getEndTime().isAfter(task.getStartTime())
+                    || !task.getEndTime().isAfter(prioritizedTask.getStartTime())) {
                 continue;
             }
-            throw new ValidationException("Пересечение задач с id=" + task.getId() + " и id=" + t.getId());
+            throw new ValidationException("Пересечение задач с id=" + task.getId() + " и id=" + prioritizedTask.getId());
         }
     }
 }
