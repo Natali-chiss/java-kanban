@@ -15,6 +15,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Files;
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 @DisplayName("Файловый менеджер")
 public class FileBackedTaskManagerTest<T extends TaskManager> extends TaskManagerTest<T> {
@@ -32,7 +34,7 @@ public class FileBackedTaskManagerTest<T extends TaskManager> extends TaskManage
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        task = new Task("task", "1", Status.DONE);
+        task = new Task("task", "1", Status.DONE, Duration.ofMinutes(15), LocalDateTime.now());
         epic = new Epic("epic", "1");
     }
 
@@ -44,7 +46,8 @@ public class FileBackedTaskManagerTest<T extends TaskManager> extends TaskManage
         Subtask subtask1 = taskManager.createSubtask
                 (new Subtask("subtask", "1", Status.NEW, epic1.getId()));
         Subtask subtask2 = taskManager.createSubtask
-                (new Subtask("subtask", "2", Status.IN_PROGRESS, epic1.getId()));
+                (new Subtask("subtask", "2", Status.IN_PROGRESS, epic1.getId(), Duration.ofMinutes(10),
+                        LocalDateTime.of(2024, 10, 1, 9, 0)));
         assertEquals(Status.IN_PROGRESS, epic1.getStatus());
 
         FileBackedTaskManager loadFromFile = FileBackedTaskManager.loadFromFile(tempFile);
@@ -60,10 +63,13 @@ public class FileBackedTaskManagerTest<T extends TaskManager> extends TaskManage
                 + " - " + loadedTask.getDescription());
         System.out.println("Статус задач совпадает: " + task1.getStatus().equals(loadedTask.getStatus()) + " - "
                 + loadedTask.getStatus());
-
-        System.out.println("\nПроверка эпиков");
+        System.out.println("Время начала задач совпадает: " + task1.getStartTime().equals(loadedTask.getStartTime())
+                + " - " + loadedTask.getStartTime());
+        System.out.println("Длительность задач совпадает: " + task1.getDuration().equals(loadedTask.getDuration())
+                + " - " + loadedTask.getDuration());
 
         Epic loadedEpic = loadFromFile.getEpic(epic1.getId());
+        System.out.println("\nПроверка эпиков");
         System.out.println("Индексы эпиков совпадают: " + (epic1.getId() == loadedEpic.getId()) + " - "
                 + loadedEpic.getId());
         System.out.println("Имена эпиков совпадают: " + epic1.getName().equals(loadedEpic.getName()) + " - "
@@ -72,6 +78,10 @@ public class FileBackedTaskManagerTest<T extends TaskManager> extends TaskManage
                 + " - " + loadedEpic.getDescription());
         System.out.println("Статус эпиков совпадает: " + epic1.getStatus().equals(loadedEpic.getStatus()) + " - "
                 + loadedEpic.getStatus());
+        System.out.println("Время начала эпиков совпадает: " + epic1.getStartTime().equals(loadedEpic.getStartTime())
+                + " - " + loadedEpic.getStartTime());
+        System.out.println("Длительность эпиков совпадает: " + epic1.getDuration().equals(loadedEpic.getDuration())
+                + " - " + loadedEpic.getDuration());
         System.out.println("Количество подзадач эпиков совпадает: " + (epic1.getSubtasksIds().size()
                 == loadedEpic.getSubtasksIds().size()) + " - " + loadedEpic.getSubtasksIds().size());
 
@@ -89,7 +99,28 @@ public class FileBackedTaskManagerTest<T extends TaskManager> extends TaskManage
                     + " - " + loadedSubtask.getStatus());
             System.out.println("Id эпика подзадач совпадают: " + subtask.getEpicId().equals(loadedSubtask.getEpicId())
                     + " - " + loadedSubtask.getEpicId());
-            System.out.println();
+            if (subtask.getStartTime() != null) {
+                System.out.println("Время начала подзадач совпадает: "
+                        + subtask.getStartTime().isEqual(loadedSubtask.getStartTime()) + " - "
+                        + loadedSubtask.getStartTime());
+            } else {
+                if (loadedSubtask.getStartTime() == null) {
+                    System.out.println("Время начала подзадач совпадает: true - null");
+                } else {
+                    System.out.println("Время начала подзадач не совпадает: " + loadedSubtask.getStartTime());
+                }
+            }
+            if (subtask.getDuration() != null) {
+                System.out.println("Длительность подзадач совпадает: "
+                        + subtask.getDuration().equals(loadedSubtask.getDuration()) + " - "
+                        + loadedSubtask.getDuration());
+            } else {
+                if (loadedSubtask.getDuration() == null) {
+                    System.out.println("Длительность подзадач совпадает: true - null");
+                } else {
+                    System.out.println("Длительность подзадач не совпадает: " + loadedSubtask.getDuration());
+                }
+            }
         }
 
         assertEquals(4, loadFromFile.getHistory().size());

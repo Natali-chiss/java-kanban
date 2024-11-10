@@ -10,11 +10,13 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Files;
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 public class FileBackedTaskManager extends InMemoryTaskManager implements TaskManager {
 
     private final Path path;
-    private static final String HEAD = "id,type,name,status,description,epic";
+    private static final String HEAD = "id,type,name,status,description,epic,duration,startTime";
 
 
     public FileBackedTaskManager(Path path) {
@@ -40,6 +42,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager implements TaskMa
         try (final BufferedWriter writer = new BufferedWriter(new FileWriter(path.toFile(),
                 StandardCharsets.UTF_8))) {
             writer.write(HEAD + "\n");
+
             for (Task task : tasks.values()) {
                 writer.write(toString(task) + "\n");
             }
@@ -77,7 +80,11 @@ public class FileBackedTaskManager extends InMemoryTaskManager implements TaskMa
                         case SUBTASK -> {
                             subtasks.put(task.getId(), (Subtask) task);
                             epics.get(task.getEpicId()).addSubtask(task.getId());
+                            calculateEpic(epics.get(task.getEpicId()));
                         }
+                    }
+                    if (task.getType() != Type.EPIC && task.getStartTime() != null) {
+                        prioritizedTasks.add(task);
                     }
                     if (maxId < id) {
                         maxId = id;
@@ -101,10 +108,20 @@ public class FileBackedTaskManager extends InMemoryTaskManager implements TaskMa
         String name = traits[2];
         String description = traits[4];
         Status status = Status.valueOf(traits[3]);
+        Duration duration = null;
+        String durationString = traits[6];
+        if (!durationString.equals("null")) {
+            duration = Duration.parse(durationString);
+        }
+        LocalDateTime startTime = null;
+        String dateTimeString = traits[7];
+        if (!dateTimeString.equals("null")) {
+            startTime = LocalDateTime.parse(dateTimeString);
+        }
 
         switch (type) {
             case TASK:
-                task = new Task(name, description, status);
+                task = new Task(name, description, status, duration, startTime);
                 break;
 
             case EPIC:
@@ -113,7 +130,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager implements TaskMa
                 break;
 
             case SUBTASK:
-                task = new Subtask(name, description, status, Integer.parseInt(traits[5]));
+                task = new Subtask(name, description, status, Integer.parseInt(traits[5]), duration, startTime);
                 break;
 
             default:
@@ -203,6 +220,6 @@ public class FileBackedTaskManager extends InMemoryTaskManager implements TaskMa
 
     private String toString(Task task) {
         return task.getId() + "," + task.getType() + "," + task.getName() + "," + task.getStatus() + ","
-                + task.getDescription() + "," + task.getEpicId();
+                + task.getDescription() + "," + task.getEpicId() + "," + task.getDuration() + "," + task.getStartTime();
     }
 }
