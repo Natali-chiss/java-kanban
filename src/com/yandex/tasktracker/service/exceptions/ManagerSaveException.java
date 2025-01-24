@@ -1,4 +1,4 @@
-package com.yandex.tasktracker.service.file;
+package com.yandex.tasktracker.service.exceptions;
 
 public class ManagerSaveException extends RuntimeException {
 
