@@ -4,6 +4,7 @@ import com.yandex.tasktracker.model.*;
 import com.yandex.tasktracker.service.InMemoryTaskManager;
 import com.yandex.tasktracker.service.Managers;
 import com.yandex.tasktracker.service.TaskManager;
+import com.yandex.tasktracker.service.exceptions.ManagerSaveException;
 import com.yandex.tasktracker.service.history.HistoryManager;
 
 import java.io.*;
@@ -201,19 +202,19 @@ public class FileBackedTaskManager extends InMemoryTaskManager implements TaskMa
     }
 
     @Override
-    public void removeTask(int id) {
+    public void removeTask(Integer id) {
         super.removeTask(id);
         save();
     }
 
     @Override
-    public void removeEpic(int id) {
+    public void removeEpic(Integer id) {
         super.removeEpic(id);
         save();
     }
 
     @Override
-    public void removeSubtask(int id) {
+    public void removeSubtask(Integer id) {
         super.removeSubtask(id);
         save();
     }

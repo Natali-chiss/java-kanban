@@ -33,11 +33,11 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public Task createTask(Task task) {
         task.setId(++newId);
-        tasks.put(newId, task);
         if (task.getStartTime() != null) {
             checkNoTimeConflict(task);
             prioritizedTasks.add(task);
         }
+        tasks.put(newId, task);
         return task;
     }
 
@@ -52,11 +52,11 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public Subtask createSubtask(Subtask subtask) {
         subtask.setId(++newId);
-        subtasks.put(newId, subtask);
         if (subtask.getStartTime() != null) {
             checkNoTimeConflict(subtask);
             prioritizedTasks.add(subtask);
         }
+        subtasks.put(newId, subtask);
         Epic epic = epics.get(subtask.getEpicId());
         epic.addSubtask(subtask.getId());
         calculateEpic(epic);
@@ -138,7 +138,7 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public Task getTask(int id) {
+    public Task getTask(Integer id) {
         final Task task = tasks.get(id);
         if (task == null) {
             throw new NotFoundException("Task id=" + id + " не найдена");
@@ -148,7 +148,7 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public Epic getEpic(int id) {
+    public Epic getEpic(Integer id) {
         final Epic epic = epics.get(id);
         if (epic == null) {
             throw new NotFoundException("Epic id=" + id + " не найден");
@@ -158,7 +158,7 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public Subtask getSubtask(int id) {
+    public Subtask getSubtask(Integer id) {
         final Subtask subtask = subtasks.get(id);
         if (subtask == null) {
             throw new NotFoundException("Subtask id=" + id + " не найдена");
@@ -187,7 +187,7 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public void removeTask(int id) {
+    public void removeTask(Integer id) {
         final Task task = tasks.remove(id);
         if (task.getStartTime() != null) {
             prioritizedTasks.remove(task);
@@ -196,20 +196,22 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public void removeEpic(int id) {
+    public void removeEpic(Integer id) {
         final Epic epic = epics.remove(id);
-        for (Integer subtaskId : epic.getSubtasksIds()) {
-            Subtask subtask = subtasks.remove(subtaskId);
-            if (subtask.getStartTime() != null) {
-                prioritizedTasks.remove(subtask);
+        if (epic.getSubtasksIds() != null) {
+            for (Integer subtaskId : epic.getSubtasksIds()) {
+                Subtask subtask = subtasks.remove(subtaskId);
+                if (subtask.getStartTime() != null) {
+                    prioritizedTasks.remove(subtask);
+                }
+                historyManager.remove(subtaskId);
             }
-            historyManager.remove(subtaskId);
         }
         historyManager.remove(id);
     }
 
     @Override
-    public void removeSubtask(int id) {
+    public void removeSubtask(Integer id) {
         final Subtask subtask = subtasks.remove(id);
         if (subtask.getStartTime() != null) {
             prioritizedTasks.remove(subtask);
@@ -221,7 +223,7 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public List<Subtask> getEpicSubtasks(int id) {
+    public List<Subtask> getEpicSubtasks(Integer id) {
         return epics.get(id).getSubtasksIds().stream()
                 .map(subtasks::get)
                 .filter(Objects::nonNull)
@@ -309,6 +311,7 @@ public class InMemoryTaskManager implements TaskManager {
                     || !task.getEndTime().isAfter(prioritizedTask.getStartTime())) {
                 continue;
             }
+            newId--;
             throw new ValidationException("Пересечение задач с id=" + task.getId() + " и id=" + prioritizedTask.getId());
         }
     }
